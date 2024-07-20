@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>한국어 숫자 공부</title>
+    <style>
+        body {
+            font-family: 'Nanum Gothic', Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        #number {
+            font-size: 48px;
+            margin: 20px 0;
+            padding: 10px;
+            border: 2px solid #007bff;
+            border-radius: 10px;
+        }
+        #answer {
+            font-size: 24px;
+            margin: 20px 0;
+            color: #28a745;
+            min-height: 30px;
+        }
+        button {
+            font-size: 18px;
+            margin: 5px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        @media (max-width: 480px) {
+            body { padding: 10px; }
+            #number { font-size: 36px; }
+            #answer { font-size: 20px; }
+            button { font-size: 16px; padding: 8px 16px; }
+        }
+    </style>
+</head>
+<body>
+    <h1>한국어 숫자 공부</h1>
+    <div id="number" aria-live="polite"></div>
+    <div id="answer" aria-live="polite"></div>
+    <button id="startBtn" onclick="generateNumber()">시작</button>
+    <button id="answerBtn" onclick="showAnswer()" disabled>정답</button>
+    <button id="audioBtn" onclick="playAudio()" disabled>읽기</button>
+    <audio id="audioPlayer"></audio>
+    <script>
+        const koreanNumbers = {
+            0:"영", 1:"일", 2:"이", 3:"삼", 4:"사", 5:"오", 6:"육", 7:"칠", 8:"팔", 9:"구", 10:"십",
+            20:"이십", 30:"삼십", 40:"사십", 50:"오십", 60:"육십", 70:"칠십", 80:"팔십", 90:"구십"
+        };
+        let currentNumber;
+        const numberElement = document.getElementById('number');
+        const answerElement = document.getElementById('answer');
+        const answerBtn = document.getElementById('answerBtn');
+        const audioBtn = document.getElementById('audioBtn');
+
+        function generateNumber() {
+            currentNumber = Math.floor(Math.random() * 100) + 1;
+            numberElement.textContent = currentNumber;
+            answerElement.textContent = '';
+            answerBtn.disabled = false;
+            audioBtn.disabled = false;
+        }
+
+        function numberToKorean(num) {
+            if (num <= 10) return koreanNumbers[num];
+            const tens = Math.floor(num / 10) * 10;
+            const ones = num % 10;
+            return `${koreanNumbers[tens]}${ones > 0 ? koreanNumbers[ones] : ''}`;
+        }
+
+        function showAnswer() {
+            if (currentNumber) {
+                answerElement.textContent = numberToKorean(currentNumber);
+            }
+        }
+
+        function playAudio() {
+            if (currentNumber) {
+                const audioPlayer = document.getElementById('audioPlayer');
+                audioPlayer.src = `audio/${currentNumber}.mp3`;
+                audioPlayer.play().catch(e => {
+                    console.error("오디오 재생 실패:", e);
+                    answerElement.textContent = "오디오 재생에 실패했습니다.";
+                });
+            }
+        }
+
+        // 초기 상태 설정
+        numberElement.textContent = "숫자가 여기에 나타납니다";
+        answerElement.textContent = "정답이 여기에 나타납니다";
+
+        // 키보드 접근성 개선
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                if (document.activeElement === answerBtn) {
+                    showAnswer();
+                } else if (document.activeElement === audioBtn) {
+                    playAudio();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
