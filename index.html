@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>한국어 숫자 공부</title>
+    <title>Estudio de números coreanos</title>
     <style>
         body {
             font-family: 'Nanum Gothic', Arial, sans-serif;
@@ -11,6 +11,12 @@
             padding: 20px;
             max-width: 600px;
             margin: 0 auto;
+        }
+        .screen {
+            display: none;
+        }
+        .active {
+            display: block;
         }
         #number {
             font-size: 48px;
@@ -43,6 +49,18 @@
             background-color: #cccccc;
             cursor: not-allowed;
         }
+        input {
+            font-size: 16px;
+            padding: 5px;
+            margin: 5px;
+            width: 50px;
+        }
+        #backToStartBtn {
+            background-color: #dc3545;
+        }
+        #backToStartBtn:hover {
+            background-color: #c82333;
+        }
         @media (max-width: 480px) {
             body { padding: 10px; }
             #number { font-size: 36px; }
@@ -52,67 +70,108 @@
     </style>
 </head>
 <body>
-    <h1>한국어 숫자 공부</h1>
-    <div id="number" aria-live="polite"></div>
-    <div id="answer" aria-live="polite"></div>
-    <button id="startBtn" onclick="generateNumber()">시작</button>
-    <button id="answerBtn" onclick="showAnswer()" disabled>정답</button>
-    <button id="audioBtn" onclick="playAudio()" disabled>읽기</button>
-    <audio id="audioPlayer"></audio>
+    <h1>Estudio de números coreanos</h1>
+    
+    <!-- 시작 화면 -->
+    <div id="startScreen" class="screen active">
+        <h2>Configuración</h2>
+        <div>
+            <button onclick="setNumberStyle('chino')">Estilo sino-coreano</button>
+            <button onclick="setNumberStyle('nativo')">Estilo nativo coreano</button>
+        </div>
+        <div>
+            <label for="minNumber">Del:</label>
+            <input type="number" id="minNumber" min="1" max="99" value="1">
+            <label for="maxNumber">Al:</label>
+            <input type="number" id="maxNumber" min="1" max="99" value="99">
+        </div>
+        <button onclick="startGame()">Comenzar</button>
+    </div>
+
+    <!-- 학습 화면 -->
+    <div id="gameScreen" class="screen">
+        <div id="number" aria-live="polite"></div>
+        <div id="answer" aria-live="polite"></div>
+        <button id="nextBtn" onclick="generateNumber()">Siguiente</button>
+        <button id="answerBtn" onclick="showAnswerAndPlay()">Respuesta</button>
+        <button id="backToStartBtn" onclick="backToStart()">Volver al inicio</button>
+        <audio id="audioPlayer"></audio>
+    </div>
+
     <script>
-        const koreanNumbers = {
+        const sinoKoreanNumbers = {
             0:"영", 1:"일", 2:"이", 3:"삼", 4:"사", 5:"오", 6:"육", 7:"칠", 8:"팔", 9:"구", 10:"십",
             20:"이십", 30:"삼십", 40:"사십", 50:"오십", 60:"육십", 70:"칠십", 80:"팔십", 90:"구십"
         };
+        const nativeKoreanNumbers = {
+            1:"하나", 2:"둘", 3:"셋", 4:"넷", 5:"다섯", 6:"여섯", 7:"일곱", 8:"여덟", 9:"아홉", 10:"열",
+            20:"스물", 30:"서른", 40:"마흔", 50:"쉰", 60:"예순", 70:"일흔", 80:"여든", 90:"아흔"
+        };
         let currentNumber;
+        let currentStyle = 'chino';
+        let minNumber, maxNumber;
+
         const numberElement = document.getElementById('number');
         const answerElement = document.getElementById('answer');
         const answerBtn = document.getElementById('answerBtn');
-        const audioBtn = document.getElementById('audioBtn');
+
+        function setNumberStyle(style) {
+            currentStyle = style;
+            document.querySelectorAll('#startScreen button').forEach(btn => btn.style.backgroundColor = '#007bff');
+            event.target.style.backgroundColor = '#28a745';
+        }
+
+        function startGame() {
+            minNumber = parseInt(document.getElementById('minNumber').value);
+            maxNumber = parseInt(document.getElementById('maxNumber').value);
+            if (minNumber > maxNumber) {
+                alert("El número mínimo debe ser menor o igual al número máximo.");
+                return;
+            }
+            document.getElementById('startScreen').classList.remove('active');
+            document.getElementById('gameScreen').classList.add('active');
+            generateNumber();
+        }
 
         function generateNumber() {
-            currentNumber = Math.floor(Math.random() * 100) + 1;
+            currentNumber = Math.floor(Math.random() * (maxNumber - minNumber + 1)) + minNumber;
             numberElement.textContent = currentNumber;
             answerElement.textContent = '';
             answerBtn.disabled = false;
-            audioBtn.disabled = false;
         }
 
-        function numberToKorean(num) {
-            if (num <= 10) return koreanNumbers[num];
+        function numberToKorean(num, style) {
+            const numbers = style === 'chino' ? sinoKoreanNumbers : nativeKoreanNumbers;
+            if (num <= 10) return numbers[num];
             const tens = Math.floor(num / 10) * 10;
             const ones = num % 10;
-            return `${koreanNumbers[tens]}${ones > 0 ? koreanNumbers[ones] : ''}`;
+            return `${numbers[tens]}${ones > 0 ? numbers[ones] : ''}`;
         }
 
-        function showAnswer() {
+        function showAnswerAndPlay() {
             if (currentNumber) {
-                answerElement.textContent = numberToKorean(currentNumber);
-            }
-        }
-
-        function playAudio() {
-            if (currentNumber) {
+                const koreanNumber = numberToKorean(currentNumber, currentStyle);
+                answerElement.textContent = koreanNumber;
                 const audioPlayer = document.getElementById('audioPlayer');
-                audioPlayer.src = `audio/${currentNumber}.mp3`;
+                audioPlayer.src = `audio/${currentStyle}_${currentNumber}.mp3`;
                 audioPlayer.play().catch(e => {
-                    console.error("오디오 재생 실패:", e);
-                    answerElement.textContent = "오디오 재생에 실패했습니다.";
+                    console.error("Error de reproducción de audio:", e);
+                    answerElement.textContent += " (Error de reproducción de audio)";
                 });
             }
         }
 
-        // 초기 상태 설정
-        numberElement.textContent = "숫자가 여기에 나타납니다";
-        answerElement.textContent = "정답이 여기에 나타납니다";
+        function backToStart() {
+            document.getElementById('gameScreen').classList.remove('active');
+            document.getElementById('startScreen').classList.add('active');
+            // 필요한 경우 여기에 추가적인 초기화 로직을 넣을 수 있습니다.
+        }
 
         // 키보드 접근성 개선
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Enter' || event.key === ' ') {
                 if (document.activeElement === answerBtn) {
-                    showAnswer();
-                } else if (document.activeElement === audioBtn) {
-                    playAudio();
+                    showAnswerAndPlay();
                 }
             }
         });
